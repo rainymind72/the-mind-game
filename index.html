@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mind - Cooperative Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .game-setup, .game-board, .game-over {
+            display: none;
+        }
+
+        .game-setup.active, .game-board.active, .game-over.active {
+            display: block;
+        }
+
+        .player-setup {
+            margin: 20px 0;
+        }
+
+        .player-setup input {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        .player-setup input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .level-info, .lives-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.2em;
+        }
+
+        .played-cards {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        .played-cards h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .card-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            width: 60px;
+            height: 90px;
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid #ddd;
+            animation: cardPlay 0.5s ease-out;
+        }
+
+        @keyframes cardPlay {
+            from {
+                transform: scale(0) rotate(180deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .players {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .player {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .player.current {
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .player-hand {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .hand-card {
+            width: 50px;
+            height: 75px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .message.success {
+            background: rgba(46, 204, 113, 0.3);
+            border: 2px solid #2ecc71;
+        }
+
+        .message.error {
+            background: rgba(231, 76, 60, 0.3);
+            border: 2px solid #e74c3c;
+        }
+
+        .message.info {
+            background: rgba(52, 152, 219, 0.3);
+            border: 2px solid #3498db;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .rules {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .rules h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .rules ul {
+            margin-left: 20px;
+        }
+
+        .rules li {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .game-info {
+                flex-direction: column;
+            }
+            
+            .players {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>THE MIND</h1>
+        <p class="subtitle">Cooperative Card Game - Play in Perfect Harmony</p>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="active">
+            <div class="rules">
+                <h3>🎯 How to Play:</h3>
+                <ul>
+                    <li>Players receive cards (1-100) and must play them in ascending order</li>
+                    <li>NO COMMUNICATION allowed - rely on intuition and timing!</li>
+                    <li>Each level, players get more cards to play</li>
+                    <li>Wrong order = lose a life ❤️</li>
+                    <li>Complete all levels to win together!</li>
+                </ul>
+            </div>
+            <button onclick="showSetup()">Start New Game</button>
+        </div>
+
+        <!-- Game Setup -->
+        <div id="game-setup" class="game-setup">
+            <h2>Game Setup</h2>
+            <div class="player-setup">
+                <input type="text" id="player1" placeholder="Player 1 Name" maxlength="15">
+                <input type="text" id="player2" placeholder="Player 2 Name" maxlength="15">
+                <input type="text" id="player3" placeholder="Player 3 Name (optional)" maxlength="15">
+                <input type="text" id="player4" placeholder="Player 4 Name (optional)" maxlength="15">
+            </div>
+            <button onclick="startGame()">Start Game</button>
+            <button onclick="showMainMenu()">Back</button>
+        </div>
+
+        <!-- Game Board -->
+        <div id="game-board" class="game-board">
+            <div class="game-info">
+                <div class="level-info">
+                    <strong>Level: <span id="current-level">1</span></strong>
+                </div>
+                <div class="lives-info">
+                    <strong>Lives: <span id="current-lives">❤️❤️❤️</span></strong>
+                </div>
+            </div>
+
+            <div class="played-cards">
+                <h3>Played Cards (in order)</h3>
+                <div id="card-stack" class="card-stack">
+                    <!-- Played cards will appear here -->
+                </div>
+            </div>
+
+            <div id="game-message" class="message" style="display: none;"></div>
+
+            <div id="players-container" class="players">
+                <!-- Player hands will be generated here -->
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button onclick="showMainMenu()">New Game</button>
+            </div>
+        </div>
+
+        <!-- Game Over -->
+        <div id="game-over" class="game-over">
+            <h2 id="game-result"></h2>
+            <div id="final-message"></div>
+            <button onclick="showMainMenu()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            players: [],
+            level: 1,
+            lives: 3,
+            playedCards: [],
+            deck: [],
+            gamePhase: 'menu' // menu, setup, playing, over
+        };
+
+        function showMainMenu() {
+            document.querySelectorAll('.game-container > div').forEach(div => div.classList.remove('active'));
+            document.getElementById('main-menu').classList.add('active');
+            gameState.gamePhase = 'menu';
+        }
+
+        function showSetup() {
+            document.querySelectorAll('.game-container > div').forEach(div => div.classList.remove('active'));
+            document.getElementById('game-setup').classList.add('active');
+            gameState.gamePhase = 'setup';
+        }
+
+        function startGame() {
+            const playerInputs = ['player1', 'player2', 'player3', 'player4'];
+            const players = [];
+            
+            playerInputs.forEach(id => {
+                const name = document.getElementById(id).value.trim();
+                if (name) {
+                    players.push({ name, hand: [] });
+                }
+            });
+
+            if (players.length < 2) {
+                alert('You need at least 2 players!');
+                return;
+            }
+
+            gameState = {
+                players: players,
+                level: 1,
+                lives: 3,
+                playedCards: [],
+                deck: [],
+                gamePhase: 'playing'
+            };
+
+            setupLevel();
+            showGameBoard();
+        }
+
+        function setupLevel() {
+            // Create deck of cards 1-100
+            gameState.deck = Array.from({length: 100}, (_, i) => i + 1);
+            shuffleArray(gameState.deck);
+
+            // Clear player hands
+            gameState.players.forEach(player => player.hand = []);
+
+            // Deal cards based on level
+            const cardsPerPlayer = gameState.level;
+            for (let i = 0; i < cardsPerPlayer; i++) {
+                gameState.players.forEach(player => {
+                    if (gameState.deck.length > 0) {
+                        player.hand.push(gameState.deck.pop());
+                    }
+                });
+            }
+
+            // Sort each player's hand
+            gameState.players.forEach(player => {
+                player.hand.sort((a, b) => a - b);
+            });
+
+            gameState.playedCards = [];
+            renderGameBoard();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function showGameBoard() {
+            document.querySelectorAll('.game-container > div').forEach(div => div.classList.remove('active'));
+            document.getElementById('game-board').classList.add('active');
+        }
+
+        function renderGameBoard() {
+            // Update level and lives
+            document.getElementById('current-level').textContent = gameState.level;
+            document.getElementById('current-lives').textContent = '❤️'.repeat(gameState.lives);
+
+            // Update played cards
+            const cardStack = document.getElementById('card-stack');
+            cardStack.innerHTML = '';
+            gameState.playedCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.textContent = card;
+                cardStack.appendChild(cardElement);
+            });
+
+            // Update player hands
+            const playersContainer = document.getElementById('players-container');
+            playersContainer.innerHTML = '';
+            
+            gameState.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                
+                playerDiv.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-hand" id="player-${index}-hand"></div>
+                `;
+                
+                playersContainer.appendChild(playerDiv);
+                
+                // Add cards to player hand
+                const handContainer = document.getElementById(`player-${index}-hand`);
+                player.hand.forEach((card, cardIndex) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'hand-card';
+                    cardElement.textContent = card;
+                    cardElement.onclick = () => playCard(index, cardIndex, card);
+                    handContainer.appendChild(cardElement);
+                });
+            });
+        }
+
+        function playCard(playerIndex, cardIndex, card) {
+            // Check if card can be played
+            const lastPlayedCard = gameState.playedCards[gameState.playedCards.length - 1] || 0;
+            
+            if (card < lastPlayedCard) {
+                // Wrong order! Lose a life
+                gameState.lives--;
+                showMessage(`💥 Wrong order! ${card} cannot be played after ${lastPlayedCard}. Life lost!`, 'error');
+                
+                if (gameState.lives <= 0) {
+                    gameOver(false);
+                    return;
+                }
+            } else {
+                // Correct! Add to played cards
+                gameState.playedCards.push(card);
+                showMessage(`✅ ${gameState.players[playerIndex].name} played ${card}!`, 'success');
+            }
+
+            // Remove card from player's hand
+            gameState.players[playerIndex].hand.splice(cardIndex, 1);
+
+            // Check if level is complete
+            const totalCardsInHands = gameState.players.reduce((sum, player) => sum + player.hand.length, 0);
+            
+            if (totalCardsInHands === 0) {
+                // Level complete!
+                setTimeout(() => {
+                    if (gameState.level >= 8) {
+                        gameOver(true);
+                    } else {
+                        gameState.level++;
+                        showMessage(`🎉 Level ${gameState.level - 1} complete! Moving to level ${gameState.level}`, 'success');
+                        setTimeout(() => {
+                            setupLevel();
+                        }, 2000);
+                    }
+                }, 1000);
+            }
+
+            renderGameBoard();
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('game-message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+
+        function gameOver(won) {
+            setTimeout(() => {
+                document.querySelectorAll('.game-container > div').forEach(div => div.classList.remove('active'));
+                document.getElementById('game-over').classList.add('active');
+                
+                const resultEl = document.getElementById('game-result');
+                const messageEl = document.getElementById('final-message');
+                
+                if (won) {
+                    resultEl.textContent = '🎉 VICTORY! 🎉';
+                    messageEl.innerHTML = `
+                        <p>Congratulations! You've mastered The Mind!</p>
+                        <p>You completed all 8 levels working in perfect harmony!</p>
+                        <p><strong>Final Level:</strong> ${gameState.level}</p>
+                        <p><strong>Lives Remaining:</strong> ${gameState.lives}</p>
+                    `;
+                } else {
+                    resultEl.textContent = '💀 GAME OVER';
+                    messageEl.innerHTML = `
+                        <p>The connection was lost... but that's part of learning!</p>
+                        <p><strong>Level Reached:</strong> ${gameState.level}</p>
+                        <p><strong>Cards Played:</strong> ${gameState.playedCards.length}</p>
+                        <p>Try again and trust your instincts!</p>
+                    `;
+                }
+            }, 1500);
+        }
+
+        // Initialize game
+        showMainMenu();
+    </script>
+</body>
+</html>
